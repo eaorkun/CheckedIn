@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizations</title>
+</head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="/css/styles.css" >
+<body>
+  <div class='topbar'>
+    <a href="/login"><img src="img/checkedIN_1.png"></img></img></a> 
+ </div>
+    <div class="center">
+      <div>
+        <h1>Your Events</h1>
+        <ul id="events_list">
+        </ul>
+    </div>
+        <div>
+            <h1>Orgs</h1>
+            <ul id="orgs_list">
+            </ul>
+            <button onclick="subToOrg()">Sub to Org</button>
+        </div>
+    </div>
+</body>
+
+<script>
+
+    // Run these functions once
+    getSubbedEvents()
+    getSubbedOrgs()
+
+    function subToOrg(){
+        let orgname = prompt("Please enter the name of the org you would like to sub to");
+        sub()
+        async function sub(){
+        let url = "/organization/" + orgname
+        let res = await fetch(url, {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json',
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+        console.log(res)
+        getSubbedOrgs();
+    }
+}
+    // get a list of all the events the logged in user is subbed to
+    async function getSubbedEvents(){
+        let url = "/events/user"
+        let res = await fetch(url, {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json',
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+
+          if (res.status == 200){
+            console.log(res.data)
+            let events = document.getElementById("events_list")
+
+            res.data['subbed_events'].forEach(element => {
+                let li = document.createElement("li")
+                li.innerHTML= element.name;
+                let span = document.createElement("span")
+                span.innerHTML= element.description
+                li.appendChild(document.createElement("br"))
+                li.appendChild(span)
+                li.appendChild(span)
+                events.appendChild(li)
+                li.onclick = ()=>{window.location.href = "/checkin/" + element.uid}
+            });
+          }
+    }
+
+    // get a list of all the events the logged in user is subbed to
+    async function getSubbedOrgs(){
+        let url = "/organization/users"
+        let res = await fetch(url, {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json',
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+
+          if (res.status == 200){
+            console.log(res.data)
+            let orgs = document.getElementById("orgs_list")
+            orgs.innerHTML = ""
+
+            res.data.forEach(element => {
+                let li = document.createElement("li")
+                let span = document.createElement("span")
+                li.innerHTML= element;
+                li.appendChild(span)
+                orgs.appendChild(li)
+                li.style.cursor = "pointer"
+                li.onclick= ()=>{
+                  window.location.href = "/joinEvent/" + element
+                }
+            });
+          }
+    }
+</script>
+</html>

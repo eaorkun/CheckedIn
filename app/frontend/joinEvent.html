@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join an Event</title>
+</head>
+<body>
+    <h3 id="org_name_hidden" style="display: none;">{{org}}</h3>
+    <h3 id="org_name">Events for {{org}}</h3>
+    <header>Current Events</header>
+    <div>
+        <ul id="event-list-org"></ul>
+    </div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="/css/styles.css" >
+</body>
+<script>
+    const org_name = document.getElementById("org_name_hidden").innerHTML
+    getEvents()
+    async function getEvents(){
+        let url2 = "/events/user"
+
+        let url = "/events/org/" + org_name
+        let resTwo = await fetch(url2, {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'cors', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json',
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+        console.log(resTwo)
+        const subbedEvents = resTwo.data.subbed_events.map(data => data.uid)
+        console.log(subbedEvents)
+        let res = await fetch(url, {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json',
+              "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+          console.log(res)
+          if (res.status == 200){
+            console.log(res.data)
+            let org = document.getElementById("event-list-org")
+
+            res.data.events.forEach(element => {
+                let li = document.createElement("li")
+                li.className = "fill darken"
+
+                let header = document.createElement("h3")
+                header.innerHTML = element.name
+                
+                li.appendChild(header)
+
+                let span = document.createElement("span")
+                span.innerHTML= element.description
+                li.appendChild(document.createElement("br"))
+                li.appendChild(span)
+                org.appendChild(li)
+                
+                // Button only if we 
+                if (!subbedEvents.includes(element.uid)){
+                    li.appendChild(document.createElement("br"))
+                    const button = document.createElement("button")
+                    button.innerHTML = "Add to Subbed List"
+                    li.appendChild(button)
+                    button.addEventListener("click", async()=>{
+                        let urll ="/events/sub/" + element.uid
+                        
+                        li.removeChild(button)
+                        let res = await fetch(urll, {
+                            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                            mode: 'same-origin', // no-cors, *cors, same-origin
+                            headers: {
+                              'Content-Type': 'application/json',
+                              "Authorization": `Bearer ${localStorage.getItem("token")}`
+                            },
+                            redirect: 'follow', // manual, *follow, error
+                            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                          }).then(response => {
+                            return response.json().then(data => ({
+                              status: response.status,
+                              data
+                            }))
+                          })
+                    })
+                }
+                li.onclick = () =>{
+                    // TODO
+                }
+            });
+          }
+    }
+
+</script>
+</html>

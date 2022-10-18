@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2 id="location-relative">Click the button to get your coordinates.</h2>
+
+<input type="text" id="query" name="q" placeholder="Search...">
+<button onclick="getCoordinates()">Search</button>
+
+<div>
+  <button onclick="getLocation()">Try It</button>
+</div>
+
+<ul id="results">
+
+</ul>
+
+<p id="demo"></p>
+
+<script>
+var x = document.getElementById("demo");
+
+async function getCoordinates(){
+  const searchQuery = document.getElementById('query').value
+
+  // Pad query with +s, assuming that you have a valid address
+  let str = searchQuery.replace(/\s\s+/g,'+')
+
+  let ul = document.getElementById("results")
+  ul.innerHTML = ""
+
+  // Calls our API 
+  const res = await fetch('/location/' + str).then(data => data.json())
+  res.forEach(loc => {
+    const li = document.createElement("li")
+    const dd = document.createElement("span")
+
+    dd.innerText = loc['display_name']
+    li.appendChild(dd)
+    li.style.cursor = "pointer"
+
+    // Append to List 
+    ul.appendChild(li)
+    li.onclick = ()=>{
+      let element = document.getElementById("location-relative")
+      let lat = parseFloat(loc['lat'])
+      let lon = parseFloat(loc['lon'])
+      console.log(yourLat,yourLon,lat,lon)
+      let distance = getDistanceFromLatLonInKm(yourLat,yourLon,lat,lon)
+      element.innerHTML = `You are ${distance} km away from ${loc['display_name']}`;
+    }
+
+  })
+  console.log(str)
+  console.log(res)
+}
+
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(showPosition);
+  } else { 
+    x.innerHTML = "Geolocation is not supported by this browser.";
+  }
+}
+
+  let yourLat, yourLon;
+function showPosition(position) {
+  yourLat = position.coords.latitude
+  yourLon = position.coords.longitude
+
+  x.innerHTML = "Latitude: " + yourLat + "<br>Longitude: " + yourLon;
+
+  // Location we care about
+  //let lat =  30.275119
+  //let lon = -97.739632
+  let lat = 40.7484 
+  let lon = -73.9857
+
+  console.log(yourLat,yourLon,lat,lon)
+  console.log(getDistanceFromLatLonInKm(yourLat,yourLon,lat,lon))
+
+}
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
+
+function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+  var dLon = deg2rad(lon2-lon1); 
+  var a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ; 
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  var d = R * c; // Distance in km
+  return d;
+}
+
+</script>
+
+</body>
+</html>

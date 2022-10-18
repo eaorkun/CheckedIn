@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+  <h1 id="pageIdd" style="display: none;">{{pageId}}</h1>
+    <header>Head to the venue to sign in.</header>
+    <div id="map" style="height:50vh; width: 80%;"></div>
+</body>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<script src="/js/map.js"></script>
+<script>
+    // get id from url
+    let uuid = document.getElementById("pageIdd").innerHTML
+    let checkinURL = "/events/checkin/" + uuid
+    let url = window.location.href
+    let cutoff = "checkin/"
+    let loc = url.indexOf(cutoff)
+    let uid = url.substring(loc + cutoff.length)
+    console.log(checkinURL)
+    getResults(uid)
+
+    async function getResults(uid){
+        let url = `/events/id/${uid}`
+        let res = await fetch(url, {
+        method: 'GET', // *GET, POST, PUT, DELETE, etc.
+        mode: 'same-origin', // no-cors, *cors, same-origin
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+      }).then(response => {
+
+        return response.json().then(data => ({
+          status: response.status,
+          data
+        }
+        ))
+      }) 
+      if(res.status === 200){
+        console.log(res)
+        let data = res['data']
+        let location = data['location'].split(",").map(elem => parseFloat(elem))
+        let map = new Map('map', location[1], location[0], data['radius'] || 25, true, ()=>{
+        
+        let resTwo = fetch(checkinURL, {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+            'Content-Type': 'application/json',
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        }).then(response => {
+            return response.json().then(data => ({
+            status: response.status,
+            data
+        }
+        ))
+      }) 
+
+        console.log(resTwo)
+        alert("Success! You've been signed in.");
+        url = ""
+        });
+        console.log(location)
+      }
+      
+    }  
+
+</script>
+
+</html>

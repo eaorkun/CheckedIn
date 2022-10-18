@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create an Event</title>
+</head>
+<body>
+    <div class="mx-auto">
+        <h1>Event Creation</h1>
+        <div>
+            <input type="text" id="eventName" name="q" placeholder="Event Name">
+        </div>
+        <div>
+            <textarea id="description" placeholder="Description"></textarea>
+        </div>
+        <div>
+            <div>Event Start Time</div>
+            <input type="datetime-local" id="timestart" placeholder="Description"></input>
+        </div>
+        <div>
+            <div>Event End Time</div>
+            <input type="datetime-local" id="timeend" placeholder="Description"></input>
+        </div>
+        <div>
+            <input type="text" id="query" name="q" placeholder="Search...">
+        </div>
+        <input type="number" id="radius_in" placeholder="Default Radius: 25 m">
+        <div>
+            <button onclick="getCoordinates()">Search</button>
+            <button onclick="setRadius()">Set Radius</button>
+            <div id="map" style="height:300px; width: 40%;"></div>
+            <button id='prevBtn' class="mapBtn">Prev</button>
+            <button id='nextBtn' class="mapBtn">Next</button>
+            <button id='submitBtn' onclick="createNewEvent()" class="mapBtn">Confirm Event</button>
+        </div>
+    </div>
+<style>
+
+    .mapBtn {
+        visibility: hidden;
+    }
+</style>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<script src="/js/map.js"></script>
+<script src="/js/loginprotected.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="/css/styles.css" >
+
+
+<script>
+
+let map;
+
+function setRadius(){
+    let radius = document.getElementById('radius_in').value;
+    if(radius <= 0){
+        radius = 25;
+    }
+    map.drawCircle(radius);
+}
+
+async function createNewEvent(){
+    let radius = map.radius;
+    let loc = map.getPointerCoordinates();
+    let lon = loc[0];
+    let lat = loc[1];
+
+    let event_name = document.getElementById('eventName').value
+    let event_description = document.getElementById('description').value
+    let event_start = document.getElementById("")
+
+    let starttime = new Date(document.getElementById("timestart").value).getTime()/1000
+    let endtime = new Date(document.getElementById("timeend").value).getTime()/1000
+
+    let body = {
+        lat:lat,
+        lon:lon,
+        time_start:starttime,
+        time_end:endtime,
+        description:event_description,
+        name:event_name,
+        radius:radius
+    }
+
+    let url ="/events"
+    // add event to database
+    let res = await fetch(url, {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        mode: 'same-origin', // no-cors, *cors, same-origin
+        headers: {
+          'Content-Type': 'application/json',
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
+        redirect: 'follow', // manual, *follow, error
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body:JSON.stringify(body)
+      }).then(response => {
+        return response.json().then(data => ({
+          status: response.status,
+          data
+        }))
+      })
+    if (res.status === 200){
+        alert("Your event has successfully been created")
+        window.location.href = "/organizationPage"
+    }
+
+}
+
+async function getCoordinates(){
+
+    const searchQuery = document.getElementById('query').value
+
+    // Pad query with +s, assuming that you have a valid address
+    let str = searchQuery.replace(/\s\s+/g,'+')
+
+
+    // Calls our API 
+    const res = await fetch('/location/' + str).then(data => data.json())
+    console.log(res);
+    if(map == undefined){
+        map = new Map("map", res[0]['lon'], res[0]['lat'], 25, false);
+    } else {
+        map.updateMap(res[0]['lon'], res[0]['lat']);
+    }
+
+    let buttons = document.getElementsByClassName("mapBtn");
+    Array.prototype.forEach.call(buttons, (btn) => {
+        btn.style.visibility = 'visible';
+    });
+
+    let i = 0;
+    document.getElementById("prevBtn").onclick = (e) =>{
+        i--;
+        if(i < res.length){
+            i = res.length - 1;
+        }
+        map.updateMap(res[i]['lon'], res[i]['lat'])
+    };
+
+    document.getElementById("nextBtn").onclick = (e) => {
+        i++;
+        if(i >= res.length){
+            i = 0;
+        }
+        map.updateMap(res[i]['lon'], res[i]['lat'])
+    };
+
+    document.getElementById("nextBtn").onclick = (e) => {
+        i++;
+        if(i >= res.length){
+            i = 0;
+        }
+        map.updateMap(res[i]['lon'], res[i]['lat'])
+    };
+
+    
+}
+</script>
+    </div>
+</body>
+</html>

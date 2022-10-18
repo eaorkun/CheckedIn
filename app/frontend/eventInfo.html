@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="/css/styles.css" >
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<script src="/js/map.js"></script>
+  <div class='topbar'>
+    <a href="/login"><img src="/img/checkedIN_1.png"></img></img></a> 
+ </div>
+ <div class="center">
+ <div id="normal">
+    <h3 id="pageId" style="display:none;">{{pageId}}</h3>
+    <h3 id="pageName" style="display:none;">{{pageId}}</h3>
+    
+</div>
+<h3>Users <span><img style="width:150px;" src="/img/checkedIN_1.png"></img></span></h3>
+<ul id="chked-list">
+  <li>Currently No Users Checked in</li>
+</ul>
+<div id="map" style="height:25vh">
+  
+</div>
+</div>
+</body>
+<script>
+    const c  = document.getElementById("pageId").innerHTML
+    const a = localStorage.getItem("token")
+    console.log(a)
+    buildPage()
+    async function buildPage(){
+        let url = "/organization/event/" + c 
+        let token = `Bearer ` + a
+        console.log(token)
+        let res = await fetch(url, {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json',
+              "Authorization": token
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+
+          // Fill in the page 
+          document.getElementById("pageName").innerHTML = res.data.name
+          document.getElementById("pageName").style.display = "block"
+          let desc = document.createElement("p")
+          desc.innerHTML= res.data.description
+          document.getElementById("normal").append(desc)
+
+          let starttime= document.createElement("p")
+          starttime.innerHTML= "Starts: " + new Date(res.data.time_start * 1000)
+          document.getElementById("normal").append(starttime)
+
+          let endtime = document.createElement("p")
+          endtime.innerHTML= "Ends: " + new Date(res.data.time_end* 1000)
+          document.getElementById("normal").append(endtime)
+
+          // Fill in the users checked in 
+          let chked = res.data.users_checked
+          const chked_list = document.getElementById("chked-list")
+          if(chked.length > 0 ){
+            chked_list.innerHTML = ""
+          }
+          chked.forEach(data => {
+            console.log(data)
+            const li = document.createElement("li")
+            li.innerText= data
+            chked_list.appendChild(li)
+          })
+          let coords = res.data.location.split(",").map(data => parseFloat(data))
+          let map = new Map('map', coords[1], coords[0], res.data.radius, false);
+    }
+</script>
+</html>

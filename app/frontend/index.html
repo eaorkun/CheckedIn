@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2 id="location-relative">Click the button to get your coordinates.</h2>
+
+<input type="text" id="query" name="q" placeholder="Search...">
+<input type="number" id="radius_in" placeholder="Default Radius: 25 m">
+<button onclick="getCoordinates()">Search</button>
+<button onclick="setRadius()">Set Radius</button>
+
+<div>
+  <button onclick="showPosition()">Try It</button>
+</div>
+
+<ul id="results">
+
+</ul>
+
+<p id="demo"></p>
+
+<style>
+    .mapBtn {
+        visibility: hidden;
+    }
+</style>
+
+<div id="map" style="height:300px; width: 40%;"></div>
+<button id='prevBtn' class="mapBtn">Prev</button>
+<button id='nextBtn' class="mapBtn">Next</button>
+<button id='submitBtn' class="mapBtn">Confirm Event</button>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js"></script>
+<script src="/js/loginprotected.js"></script>
+
+<script>
+
+var x = document.getElementById("demo");
+
+let map;
+
+function setRadius(){
+    let radius = document.getElementById('radius_in').value;
+    if(radius <= 0){
+        radius = 25;
+    }
+    map.drawCircle(radius);
+}
+
+async function getCoordinates(){
+
+  const searchQuery = document.getElementById('query').value
+
+  // Pad query with +s, assuming that you have a valid address
+  let str = searchQuery.replace(/\s\s+/g,'+')
+
+  let ul = document.getElementById("results")
+  ul.innerHTML = ""
+
+  // Calls our API 
+  const res = await fetch('/location/' + str).then(data => data.json())
+
+    if(map == undefined){
+        map = new Map("map", res[0]['lon'], res[0]['lat'], false);
+    } else {
+        map.updateMap(res[0]['lon'], res[0]['lat']);
+    }
+
+    let buttons = document.getElementsByClassName("mapBtn");
+    Array.prototype.forEach.call(buttons, (btn) => {
+        btn.style.visibility = 'visible';
+    });
+
+    let i = 0;
+    document.getElementById("prevBtn").onclick = (e) =>{
+        i--;
+        if(i < res.length){
+            i = res.length - 1;
+        }
+        map.updateMap(res[i]['lon'], res[i]['lat'])
+    };
+
+    document.getElementById("nextBtn").onclick = (e) => {
+        i++;
+        if(i >= res.length){
+            i = 0;
+        }
+        map.updateMap(res[i]['lon'], res[i]['lat'])
+    };
+
+    document.getElementById("submitBtn").onclick = (e) => {
+        const lnglat = map.getPointerCoordinates();
+        console.log(lnglat[0], lnglat[1]);
+    }
+
+//   res.forEach(loc => {
+//     const li = document.createElement("li")
+//     const dd = document.createElement("span")
+
+
+//     dd.innerText = loc['display_name']
+//     li.appendChild(dd)
+//     li.style.cursor = "pointer"
+
+//     // Append to List 
+//     ul.appendChild(li)
+//     li.onclick = ()=>{
+//       let element = document.getElementById("location-relative")
+//       let lat = parseFloat(loc['lat'])
+//       let lon = parseFloat(loc['lon'])
+//       map.updateMap(lon, lat);
+//       console.log(yourLat,yourLon,lat,lon)
+//       let distance = getDistanceFromLatLonInKm(yourLat,yourLon,lat,lon)
+//       element.innerHTML = `You are ${distance} km away from ${loc['display_name']}`;
+//     }
+
+//   })
+  console.log(str)
+  console.log(res)
+}
+
+
+
+  let yourLat, yourLon;
+function showPosition() {
+    
+    if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((position) => {
+        yourLat = position.coords.latitude
+  yourLon = position.coords.longitude
+
+  x.innerHTML = "Latitude: " + yourLat + "<br>Longitude: " + yourLon;
+
+
+  // Location we care about
+  //let lat =  30.275119
+  //let lon = -97.739632
+  let lat = 40.7484 
+  let lon = -73.9857
+
+  console.log(yourLat,yourLon,lat,lon)
+  console.log(getDistanceFromLatLonInKm(yourLat,yourLon,lat,lon))
+    });
+  } else { 
+    x.innerHTML = "Geolocation is not supported by this browser.";
+  }
+}
+
+
+</script>
+
+</body>
+</html>

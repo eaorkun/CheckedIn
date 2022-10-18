@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to ClickedIn</title>
+</head>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="/css/styles.css" >
+<body>
+    <div class="center">
+        <img src="/img/checkedIN_1.png" width="100%"></img>
+        <div>
+            <h3>Who are you logging in as?</h3>
+            <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="selector" id="inlineRadio1" value="organization">
+            <label class="form-check-label" for="inlineRadio1">Organization</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="selector" id="inlineRadio2" value="user">
+            <label class="form-check-label" for="inlineRadio2">User</label>
+          </div>
+        <div>
+        </div>
+        
+        
+            <input class="fill input-group" id="username" type='text' placeholder="Username" width="100%"></input>
+        </div>
+        <div>
+            <input class="fill input-group" id="password" type="password" placeholder="Password"></input>
+        </div>
+        <button class="fill darken btn btn-primary" onclick="Login()">Login</button>
+    </div>
+</body>
+<script>
+    // On Coming to the page, clear all auth
+    localStorage.clear()
+    async function Login(){
+        // Get username, password
+        let username = document.getElementById("username").value
+        let password = document.getElementById("password").value
+        var data;
+
+        var ele = document.getElementsByName('selector');
+              
+        let checked = ""
+        let url = ""
+
+        for(i = 0; i < ele.length; i++) {
+            if (ele[i].checked)
+                checked= ele[i].value
+        }
+        if (checked === "user"){
+            url = "/auth/login"
+            data = {username:username,password:password}
+        }
+        else if (checked === "organization"){
+            url = "/organization/login"
+            data = {orgname:username,password:password}
+        }
+        console.log(data)
+        
+
+        let res = await fetch(url, {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'same-origin', // no-cors, *cors, same-origin
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+            body: JSON.stringify(data) // body data type must match "Content-Type" header
+          }).then(response => {
+            return response.json().then(data => ({
+              status: response.status,
+              data
+            }))
+          })
+
+          if (res.status == 200){
+            localStorage.setItem("token", res.data.token)
+            if (checked === "user"){
+                localStorage.setItem("username", res.data.username)
+                window.location.href = "/userPage"
+            }
+            else if (checked === "organization"){
+                localStorage.setItem("orgname", res.data.orgname)
+                window.location.href = "/organizationPage"
+            }
+          }
+    }
+    
+</script>
+</html>
